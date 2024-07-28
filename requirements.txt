@@ -12,7 +12,9 @@ Faker
 boto3  
 
 # Other Utilities
-# For data manipulation (if needed)
+# For data manipulation
 pandas
-# For HTTP requests (if needed)
+# For HTTP requests
 requests  
+jupyter
+matplotlib
