@@ -3,67 +3,54 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 LogInsights provide important data from vast amounts of log data. This data engineering project use Kafka, Spark, and Elasticsearch on AWS to build a robust and efficient log analytics pipeline.
-
-## Features
-
-- **Scalable Ingestion:**  Efficiently handles high-volume log streams in real-time using Kafka:
-
-```python
-from kafka import KafkaProducer
-producer.send('log_topic', value=log_message.encode('utf-8'))
+# Step 1: Generate Log Data
+- **Script**: _log_generator.py_
+- **Purpose**: Simulates realistic log entries and saves them to the _data/raw_logs/_ folder. Command:
 ```
-
-- **Distributed Processing:** Transforms and aggregates log data at scale with Spark:
-
-```python
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import *
-error_counts = df.filter(col("level") == "ERROR").groupBy("type").count()
+docker exec -it spark-container python3 /app/src/data_generation/log_generator.py
 ```
+- Why: This step creates the initial log data that will be ingested and processed by the system.
 
-- **Powerful Search and Analysis:** Quickly index and search log data in Elasticsearch:
+# Step 2: Ingest Logs with Kafka Producer
+- **Script**: _producer.py_ 
+- Purpose: Reads the generated log files and sends them to a Kafka topic (log_topic). Command:
 
-```python
-from elasticsearch import Elasticsearch
-es.index(index='log_index', document=log_record)
 ```
+docker exec -it spark-container python3 /app/src/kafka/producer.py
+```
+- Why: Kafka acts as a message broker, allowing for scalable and reliable log data ingestion.
 
-- **AWS Integration:**  Deploys seamlessly on AWS use managed services for scalability and reliability.
-- **Data Simulation:** Generates realistic log data for testing and development purposes.
-- **Monitoring and Alerting:** Includes basic monitoring and alerting to proactively address pipeline issues.
-- **Dockerized:** Packaged in a Docker container for easy local setup and deployment.
+# Step 3: Process Logs with Spark
+- Script: _log_processor.py_
+- Purpose: Reads logs from Kafka using Spark Streaming, processes them, and writes the processed logs to the data/processed_logs/ folder in Parquet format. Command:
+```
+docker exec -it spark-container python3 /app/src/spark/log_processor.py
+```
+- Why: Spark processes the log data in real-time, enabling transformations, filtering, and aggregation of log entries.
 
-## Getting Started
+# Step 4: Index Processed Logs with Elasticsearch
+- **Script:** _indexer.py_
+- Purpose: Reads processed log files from the data/processed_logs/ folder and indexes them into Elasticsearch for efficient search and analysis. Command:
+```
+docker exec -it spark-container python3 /app/src/elasticsearch/indexer.py
+```
+- Why: Elasticsearch provides powerful search and analytics capabilities, making it easy to query and analyze the processed log data.
 
-1. **Prerequisites:** 
-   - Docker: [Install Docker](https://docs.docker.com/get-docker/)
-   - AWS Account: [Create an AWS account](https://aws.amazon.com/) (if deploying on AWS)
+# Step 5: Visualize Data with Jupyter Notebook
+- Notebook: _data_analysis.ipynb_
+- Purpose: Loads raw and processed logs, and creates visualizations to analyze log data. Command:
+```
+docker exec -it spark-container jupyter notebook --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token=''
+```
+- Why: Jupyter Notebook provides an interactive environment to explore and visualize the log data, helping to gain insights and understand patterns.
 
-2. **Clone Repository:**
-   ```bash
-   git clone https://github.com/uparkalau/LogInsights.git
-   ```
-
-3. **Build Docker Image:**
-   ```bash
-   cd LogInsights
-   docker build -t loginsights .
-   ```
-
-4. **Run with Docker:**
-   ```bash
-   docker run -it --rm \
-     -v ${PWD}/data:/app/data \
-     -p 9092:9092 -p 8080:8080 -p 9200:9200 \
-     loginsights
-   ```
-
-## Future Enhancements
-
-- Advanced Analytics (e.g., anomaly detection, machine learning)
-- Customizable Dashboards (Kibana, Grafana)
-- Enhanced Security (authentication, authorization)
-- Automated Deployment (Terraform, AWS CloudFormation)
+## Summary
+- Generate Logs: Create initial log data.
+- Ingest Logs: Send logs to Kafka for reliable ingestion.
+- Process Logs: Use Spark to process and transform log data.
+- Index Logs: Store processed logs in Elasticsearch for search and analysis.
+- Visualize Data: Use Jupyter Notebook to explore and visualize the data.
+- This workflow ensures that log data is efficiently generated, ingested, processed, indexed, and visualized, providing a comprehensive solution for log analysis.
 
 ## Contributing
 
